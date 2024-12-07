@@ -1,0 +1,146 @@
+import pandas as pd
+elections = pd.read_html('https://en.wikipedia.org/wiki/Results_of_the_2019_United_Kingdom_general_election') 
+
+# England 
+england = elections[0].iloc[1:534,]
+england.columns = [i[1] for i in england.columns.to_flat_index()]
+england = england.rename(columns = {'Lab[b][c]': 'Lab'})
+england = england[['Constituency', 'Con', 'Lab', 'LD', 'Grn', 'Total']]
+
+# Scotland 
+scotland = elections[2].iloc[1:60,]
+scotland.columns = [i[1] for i in scotland.columns.to_flat_index()]
+scotland = scotland.rename(columns = {'Lab[b]': 'Lab'})
+scotland = scotland[['Constituency', 'Con', 'Lab', 'LD', 'Grn', 'Total']]
+
+wales = elections[3].iloc[1:41,]
+wales.columns = [i[1] for i in wales.columns.to_flat_index()]
+wales = wales.rename(columns = {'Lab[b]': 'Lab'})
+wales = wales[['Constituency', 'Con', 'Lab', 'LD', 'Grn', 'Total']]
+
+election = pd.concat([england, scotland, wales]).set_index('Constituency').fillna(0)
+election.head()
+
+for col in election.columns:
+    election[col] = election[col].astype(int) / election['Total'].astype(int)
+election = election.drop('Total', axis = 1)
+election.head()
+
+import re
+from unidecode import unidecode
+
+standardize = lambda x: unidecode(re.sub(',', '', x))
+election.index = [standardize(i) for i in election.index]
+election.index
+election.index[508] # given as Weston-Super-Mare in boundaries! 
+election = election.rename(index = {'Weston-super-Mare': 'Weston-Super-Mare'})
+
+election = dict(election)
+
+import branca.colormap as cmp
+colors = {party: cmp.LinearColormap(['white', color], vmin=0, vmax=max(election[party])) \
+          for party, color in zip(election.keys(), ['#3a85d6', '#ed4224', '#e8ca54', '#6cbd6c'])}
+
+def get_color(feature, party):
+    value = feature['properties']['PCON13NM']
+    value = re.sub(',', '', value)
+    return colors[party](election[party][value])
+
+import requests
+boundaries = requests.get('https://github.com/martinjc/UK-GeoJSON/blob/master/json/electoral/gb/wpc.json?raw=true').json()
+
+import folium 
+m = folium.Map(location=[52, 0.0], zoom_start=7, 
+               width=1200, height=1000, 
+               tiles = None)
+folium.TileLayer(
+    tiles='https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}',
+    attr='Esri',
+    name='Esri Satellite', overlay=True, control=False
+).add_to(m)
+
+election
+
+m = folium.Map(location=[52, 0.0], zoom_start=7, 
+               width=1200, height=1000, 
+               tiles = None)
+
+
+# Add GeoJson layers for each part
+folium.GeoJson(
+    boundaries,
+    name='Con',
+    style_function=lambda feature, party='Con': {
+        "fillColor": get_color(feature, party),  # Get color for the specific party
+        "color": "gray",
+        "weight": 1,
+        "dashArray": "1",
+        "fillOpacity": 1,
+    },overlay=False,
+    popup=folium.GeoJsonPopup(
+        fields=["PCON13NM"],
+        aliases=["Constituency Name"],
+        localize=True,
+        labels=True,
+        sticky=False
+    )# Attach the popup directly here
+).add_to(m)
+folium.GeoJson(
+    boundaries,
+    name='LD',
+    style_function=lambda feature, party='LD': {
+        "fillColor": get_color(feature, party),  # Get color for the specific party
+        "color": "gray",
+        "weight": 1,
+        "dashArray": "1",
+        "fillOpacity": 1,
+    },overlay=False,
+    popup=folium.GeoJsonPopup(
+        fields=["PCON13NM"],
+        aliases=["Constituency Name"],
+        localize=True,
+        labels=True,
+        sticky=False
+    )# Attach the popup directly here
+).add_to(m)
+folium.GeoJson(
+    boundaries,
+    name='Lab',
+    style_function=lambda feature, party='Lab': {
+        "fillColor": get_color(feature, party),  # Get color for the specific party
+        "color": "gray",
+        "weight": 1,
+        "dashArray": "1",
+        "fillOpacity": 1,
+    },overlay=False,
+    popup=folium.GeoJsonPopup(
+        fields=["PCON13NM"],
+        aliases=["Constituency Name"],
+        localize=True,
+        labels=True,
+        sticky=False
+    )# Attach the popup directly here
+).add_to(m)
+folium.GeoJson(
+    boundaries,
+    name='Grn',
+    style_function=lambda feature, party='Grn': {
+        "fillColor": get_color(feature, party),  # Get color for the specific party
+        "color": "gray",
+        "weight": 1,
+        "dashArray": "1",
+        "fillOpacity": 1,
+    },overlay=False,
+    popup=folium.GeoJsonPopup(
+        fields=["PCON13NM"],
+        aliases=["Constituency Name"],
+        localize=True,
+        labels=True,
+        sticky=False
+    )# Attach the popup directly here
+).add_to(m)
+
+# Add layer control
+folium.LayerControl(collapsed=False).add_to(m)
+
+m
