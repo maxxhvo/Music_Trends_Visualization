@@ -6,7 +6,7 @@
 
 Around early December, the buzz around music tends to steadily grow, likely driven by a combination of year-end releases, holiday-themed music, and anticipation for “best of the year” lists and award season predictions. Any social media user knows that the day that Spotify Unwrapped, Apple Music Replay, etc. come out, their feed is going to consist entirely of that for the next few days (as it did just this December 4th). The general population tends to be quite curious about what their peers are listening to, and avidly consume content about others’ listening habits, whether it’s through Spotify Unwrapped or other apps like Airbuds.fm that allow users to share their listening with their peers. To this end, this project seeks to combine listening habits with location to create an interactive visual experience of listening habits across the United States through an analysis of information pulled from the Charmetric and Seatgeek APIs, and web scraped information from various online resources.
 
-The Interactive Visualization Below Compares City-Level Trends for the 50 Most Populous Cities to State-Level Trends.
+The Interactive Visualization below compares city-level trends for the 50 most populous cities to state-Level trends.
 
 ---
 
